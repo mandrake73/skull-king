@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, X, Share2, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { ChevronLeft, ChevronRight, X, Share2, AlertTriangle, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import { encode, decode } from '@hugov/shorter-string';
 import QRCode from 'qrcode.react';
 
 const SkullKing: React.FC = () => {
+  const { t, i18n } = useTranslation();
 
   const MIN_PLAYERS = 2;
   const MAX_PLAYERS = 8;
@@ -22,19 +24,19 @@ const SkullKing: React.FC = () => {
   const [showQRCode, setShowQRCode] = useState(false);
 
   const specialCards = [
-    { name: 'Mermaid', max: 2 },
-    { name: 'Pirate', max: 6 },
-    { name: 'S. King', max: 1 },
-    { name: '+10', max: 5 }
+    { name: 'mermaid', max: 2 },
+    { name: 'pirate', max: 6 },
+    { name: 'skullKingCard', max: 1 },
+    { name: 'bonus', max: 5 }
   ];
 
   const getButtonClasses = (cardName: string): string => {
     switch (cardName) {
-      case 'Pirate':
+      case 'pirate':
         return 'bg-red-700 hover:bg-red-800 text-white border-red-700';
-      case 'Mermaid':
+      case 'mermaid':
         return 'bg-[#20B2AA] hover:bg-[#008B8B] text-white border-[#20B2AA]';
-      case '+10':
+      case 'bonus':
         return 'bg-[#2E8B57] hover:bg-[#228B22] text-white border-[#2E8B57]';
       default:
         return '';
@@ -149,6 +151,7 @@ const SkullKing: React.FC = () => {
     setCurrentRoundIndex(rounds.length);
   };
 
+
   const cycleValue = (value: number, max: number) => {
     if (value === null) return 0;
     return (value + 1) > max ? 0 : value + 1;
@@ -205,10 +208,10 @@ const SkullKing: React.FC = () => {
       score = roundNumber * (tricks === 0 ? 10 : -10);
     } else if (bid === tricks) {
       score = bid * 20;
-      score += specialCards['Mermaid'] * 20;
-      score += specialCards['Pirate'] * 30;
-      score += specialCards['S. King'] * 40;
-      score += specialCards['+10'] * 10;
+      score += specialCards['mermaid'] * 20;
+      score += specialCards['pirate'] * 30;
+      score += specialCards['skullKingCard'] * 40;
+      score += specialCards['bonus'] * 10;
     } else {
       score = Math.abs(bid - tricks) * -10;
     }
@@ -299,7 +302,7 @@ const SkullKing: React.FC = () => {
 
   const decompressState = (compressed: any): { players: string[], rounds: Round[] } => {
     const [players, compressedRounds] = compressed;
-    const specialCardNames = ['Mermaid', 'Pirate', 'S. King', '+10'];
+    const specialCardNames = ['mermaid', 'pirate', 'skullKingCard', 'bonus'];
 
     const rounds: Round[] = compressedRounds.map((round: any) => ({
       roundNumber: round[0],
@@ -325,7 +328,7 @@ const SkullKing: React.FC = () => {
     if (roundTricksLeft > 0) {
       return (
         <div className="flex items-center justify-center text-blue-500 font-bold mt-2">
-          <AlertTriangle className="mr-2" />{roundTricksLeft} tricks left!
+          <AlertTriangle className="mr-2" />{roundTricksLeft} {t('tricksLeft')}
         </div>
       );
     }
@@ -335,7 +338,7 @@ const SkullKing: React.FC = () => {
     if (isTrickLimitExceeded(round)) {
       return (
         <div className="flex items-center justify-center text-red-500 font-bold mt-2">
-          <AlertTriangle className="mr-2" />Too many tricks!
+          <AlertTriangle className="mr-2" />{t('tooManyTricks')}
         </div>
       );
     }
@@ -344,10 +347,10 @@ const SkullKing: React.FC = () => {
   if (rounds.length === 0) {
     return (
       <div className="p-2 max-w-sm mx-auto">
-        <h1 className="text-xl font-bold mb-2">Skull King</h1>
+        <h1 className="text-xl font-bold mb-2">{t('skullKing')}</h1>
         <Card className="mb-2">
           <CardHeader className="p-2">
-            <CardTitle className="text-lg">Players</CardTitle>
+            <CardTitle className="text-lg">{t('players')}</CardTitle>
           </CardHeader>
           <CardContent className="p-2">
             {players.map((player, index) => (
@@ -362,12 +365,12 @@ const SkullKing: React.FC = () => {
                 <Button onClick={() => removePlayer(index)} className="p-1" disabled={!canRemovePlayer()}><X size={16} /></Button>
               </div>
             ))}
-            <Button onClick={addPlayer} className="w-full mt-2" disabled={!canAddPlayer()}>Add Player</Button>
+            <Button onClick={addPlayer} className="w-full mt-2" disabled={!canAddPlayer()}>{t('addPlayer')}</Button>
           </CardContent>
         </Card>
         {shouldEnableNextRound(rounds, currentRoundIndex) && (
           <Button onClick={initializeRound} className="w-full">
-            Start Round 1
+            {t('startRound', { number: 1 })}
           </Button>
         )}
       </div>
@@ -376,12 +379,22 @@ const SkullKing: React.FC = () => {
 
   return (
     <div className="p-2 max-w-sm mx-auto">
-      <h1 className="text-xl font-bold mb-2">Skull King</h1>
+      <div className="flex justify-between items-center mb-2">
+        <h1 className="text-xl font-bold">{t('skullKing')}</h1>
+        <button 
+          onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'fr' : 'en')}
+          className="flex items-center gap-2 px-2 py-1 text-sm border rounded hover:bg-gray-100"
+          title={i18n.language === 'en' ? 'Français' : 'English'}
+        >
+          <Globe size={16} />
+          {i18n.language.toUpperCase()}
+        </button>
+      </div>
       <Card className="mb-2">
         <CardHeader className="p-2">
           <CardTitle className="text-lg flex justify-between items-center">
             <Button onClick={() => navigateRound(-1)} disabled={currentRoundIndex === 0} className="p-1"><ChevronLeft size={16} /></Button>
-            Round {rounds[currentRoundIndex].roundNumber}
+            {t('round')} {rounds[currentRoundIndex].roundNumber}
             <Button onClick={() => navigateRound(1)} disabled={currentRoundIndex === rounds.length - 1} className="p-1"><ChevronRight size={16} /></Button>
           </CardTitle>
         </CardHeader>
@@ -390,17 +403,17 @@ const SkullKing: React.FC = () => {
             <div key={playerIndex} className="mb-2 p-2 border rounded">
               <div className="flex justify-between items-center mb-1">
                 <span className="font-bold">{playerScore.name}</span>
-                <span className="font-bold">Score: {playerScore.score} / {calculateTotal(playerIndex)}</span>
+                <span className="font-bold">{t('score')}: {playerScore.score} / {calculateTotal(playerIndex)}</span>
               </div>
               <div className="flex justify-between mb-1">
                 <Button onClick={() => updatePlayerScore(playerIndex, 'bid')} className="text-xs px-2 py-1 flex-1 mr-1">
-                  Bid: <span className="font-bold ml-1 text-sm">{playerScore.bid === null ? '' : playerScore.bid}</span>
+                  {t('bid')}: <span className="font-bold ml-1 text-sm">{playerScore.bid === null ? '' : playerScore.bid}</span>
                 </Button>
                 <Button onClick={() => updatePlayerScore(playerIndex, 'tricks')}
                   className="text-xs px-2 py-1 flex-1 ml-1"
                   disabled={shouldDisableTricks(playerScore)}
                 >
-                  Tricks: <span className="font-bold ml-1 text-sm">{playerScore.tricks === null ? '' : playerScore.tricks}</span>
+                  {t('tricks')}: <span className="font-bold ml-1 text-sm">{playerScore.tricks === null ? '' : playerScore.tricks}</span>
                 </Button>
               </div>
               <div className="grid grid-cols-4 gap-1">
@@ -410,7 +423,7 @@ const SkullKing: React.FC = () => {
                     onClick={() => updateSpecialCard(playerIndex, card.name)} 
                     className={cn("text-xs px-2 py-1 flex items-center", getButtonClasses(card.name))}
                     disabled={!shouldEnableSpecialCards(playerScore)}
-                  >{card.name}: <span className="font-bold ml-1 text-sm">{playerScore.specialCards[card.name]}</span></Button>
+                  >{t(card.name)}: <span className="font-bold ml-1 text-sm">{playerScore.specialCards[card.name]}</span></Button>
                 ))}
               </div>
             </div>
@@ -422,13 +435,13 @@ const SkullKing: React.FC = () => {
 
       {shouldEnableNextRound(rounds, currentRoundIndex) && (
           <Button onClick={initializeRound} className="w-full" disabled={!isCurrentRoundComplete(rounds, currentRoundIndex)}>
-            Start Round {rounds.length + 1}
+            {t('startRound', { number: rounds.length + 1 })}
           </Button>
       )}
 
       <Card>
         <CardHeader className="p-2">
-          <CardTitle className="text-lg">Total Scores</CardTitle>
+          <CardTitle className="text-lg">{t('totalScores')}</CardTitle>
         </CardHeader>
         <CardContent className="p-2">
           {getSortedPlayerScores().map((player, index) => (
@@ -442,19 +455,18 @@ const SkullKing: React.FC = () => {
 
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button className="w-full mt-4">Start a new game</Button>
+          <Button className="w-full mt-4">{t('startNewGame')}</Button>
         </AlertDialogTrigger>
         <AlertDialogContent className="max-w-[300px]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('areYouSure')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will reset all players and scores.
-              This cannot be undone.
+              {t('resetGameDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={resetGame}>Start new game</AlertDialogAction>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={resetGame}>{t('startNew')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -463,12 +475,12 @@ const SkullKing: React.FC = () => {
         {showQRCode && (
           <div className="mt-4 flex flex-col items-center">
             <QRCode value={window.location.href} size={200} />
-            <p className="mt-2 text-sm">Link copied to clipboard! Or scan this QR code</p>
+            <p className="mt-2 text-sm">{t('linkCopied')}</p>
           </div>
         )}
         {!showQRCode && (
         <Button onClick={handleShareLink} className="h-8 px-3 text-sm" variant="outline">
-          <Share2 className="mr-2" size={16} /> Share
+          <Share2 className="mr-2" size={16} /> {t('share')}
         </Button>
         )}
       </div>
