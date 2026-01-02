@@ -13,6 +13,8 @@ export interface PlayerScore {
 export interface Round {
   roundNumber: number;
   playerScores: PlayerScore[];
+  kraken: number;
+  whale: number;
 }
 
 export interface SortedPlayerScore {

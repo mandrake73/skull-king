@@ -53,16 +53,20 @@ const SkullKing: React.FC = () => {
     return round.playerScores.reduce((total, player) => total + (player.tricks ?? 0), 0);
   };
 
+  const getEffectiveRoundTricks = (round: Round): number => {
+    return round.roundNumber - (round.kraken + round.whale);
+  };
+
   const tricksLeft = (round: Round): number => {
-    return round.roundNumber - calculateTotalTricks(round);
+    return getEffectiveRoundTricks(round) - calculateTotalTricks(round);
   };
 
   const isTrickLimitReached = (round: Round): boolean => {
-    return calculateTotalTricks(round) == round.roundNumber;
+    return calculateTotalTricks(round) === getEffectiveRoundTricks(round);
   };
 
   const isTrickLimitExceeded = (round: Round): boolean => {
-    return calculateTotalTricks(round) > round.roundNumber;
+    return calculateTotalTricks(round) > getEffectiveRoundTricks(round);
   }; 
 
   const shouldDisableTricks = (playerScore: PlayerScore) => {
@@ -144,13 +148,36 @@ const SkullKing: React.FC = () => {
         tricks: null,
         specialCards: specialCards.reduce((acc, card) => ({ ...acc, [card.name]: 0 }), {}),
         score: 0
-      }))
+      })),
+      kraken: 0,
+      whale: 0
     };
 
     setRounds([...rounds, newRound]);
     setCurrentRoundIndex(rounds.length);
   };
 
+  const updateRoundModifier = (modifier: 'kraken' | 'whale') => {
+    const updatedRounds = [...rounds];
+    const round = updatedRounds[currentRoundIndex];
+    
+    if (modifier === 'kraken') {
+      round.kraken = (round.kraken + 1) % 2; // Toggle between 0 and 1
+    } else if (modifier === 'whale') {
+      round.whale = (round.whale + 1) % 2; // Toggle between 0 and 1
+    }
+    
+    setRounds(updatedRounds);
+  };
+
+  const isRoundModifierDisabled = (modifier: 'kraken' | 'whale'): boolean => {
+    const round = rounds[currentRoundIndex];
+    if (modifier === 'kraken') {
+      return round.whale === 1; // Disable kraken if whale is 1
+    } else {
+      return round.kraken === 1; // Disable whale if kraken is 1
+    }
+  };
 
   const cycleValue = (value: number, max: number) => {
     if (value === null) return 0;
@@ -295,7 +322,8 @@ const SkullKing: React.FC = () => {
           score.bid,
           score.tricks,
           compressedSpecialCards(score.specialCards)
-        ])
+        ]),
+        [round.kraken, round.whale]
       ])
     ];
   };
@@ -317,7 +345,9 @@ const SkullKing: React.FC = () => {
         };
         playerScore.score = calculatePlayerScore(playerScore, round[0]);  // Recalculate score
         return playerScore;
-      })
+      }),
+      kraken: round[2]?.[0] ?? 0,
+      whale: round[2]?.[1] ?? 0
     }));
 
     return { players, rounds };
@@ -430,6 +460,22 @@ const SkullKing: React.FC = () => {
           ))}
           {renderTrickLimitExceededMessage(rounds[currentRoundIndex])}
           {renderTricksLeftMessage(rounds[currentRoundIndex])}
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            <Button 
+              onClick={() => updateRoundModifier('kraken')}
+              className="bg-red-700 hover:bg-red-800 text-white border-red-700 text-xs px-2 py-1"
+              disabled={isRoundModifierDisabled('kraken')}
+            >
+              {t('kraken')}: <span className="font-bold ml-1">{rounds[currentRoundIndex].kraken}</span>
+            </Button>
+            <Button 
+              onClick={() => updateRoundModifier('whale')}
+              className="bg-[#20B2AA] hover:bg-[#008B8B] text-white border-[#20B2AA] text-xs px-2 py-1"
+              disabled={isRoundModifierDisabled('whale')}
+            >
+              {t('whale')}: <span className="font-bold ml-1">{rounds[currentRoundIndex].whale}</span>
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
